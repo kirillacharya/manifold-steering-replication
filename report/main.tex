@@ -11,6 +11,7 @@
 \usepackage[dvipsnames]{xcolor}
 \usepackage[colorlinks=true,linkcolor=black,citecolor=gray,urlcolor=RoyalBlue]{hyperref}
 \usepackage{caption}
+\usepackage{float}
 
 \captionsetup{font=footnotesize,labelfont=bf,skip=3pt}
 \titleformat{\section}{\large\bfseries}{}{0pt}{}
@@ -139,6 +140,24 @@ activation slides along each path. If behavior follows geometry, the manifold
 path should hand probability mass smoothly from one day to the next, while
 the linear path should not.
 
+\begin{figure}[b!]
+  \centering
+  \begin{minipage}[c]{0.44\textwidth}
+    \centering
+    \includegraphics[width=\linewidth,trim=0 0 0 48pt,clip]{figures/torus_repr.png}
+  \end{minipage}\hfill
+  \begin{minipage}[c]{0.50\textwidth}
+    \centering
+    \includegraphics[width=\linewidth,trim=0 0 0 44pt,clip]{figures/subspace_2d_grid.png}
+  \end{minipage}
+  \caption{\textbf{Left:} layer-24 activations on the day$\times$hour torus,
+  colored by day (7 ordered arcs) and by hour. \textbf{Right:}
+  day$\times$hour probability grids across 6 steering steps, (Tue,\,09:00)
+  $\to$ (Fri,\,15:00); top row torus (product-coordinate) steering, bottom
+  row linear steering.}
+  \label{fig:torus}
+\end{figure}
+
 \section{Replication of the main figure}
 
 Figure~\ref{fig:main} replicates the paper's main result. In both domains the
@@ -177,24 +196,6 @@ independent coordinates. Projecting each activation onto both planes gives two r
 rendered on a torus surface with day on the major circle and hour on the
 minor (Fig.~\ref{fig:torus}, left). The 7 day-arcs are cleanly ordered; the hour
 circle does not fully close, so hour is only partially circular here.
-
-\begin{figure}[b!]
-  \centering
-  \begin{minipage}[c]{0.44\textwidth}
-    \centering
-    \includegraphics[width=\linewidth,trim=0 0 0 48pt,clip]{figures/torus_repr.png}
-  \end{minipage}\hfill
-  \begin{minipage}[c]{0.50\textwidth}
-    \centering
-    \includegraphics[width=\linewidth,trim=0 0 0 44pt,clip]{figures/subspace_2d_grid.png}
-  \end{minipage}
-  \caption{\textbf{Left:} layer-24 activations on the day$\times$hour torus,
-  colored by day (7 ordered arcs) and by hour. \textbf{Right:}
-  day$\times$hour probability grids across 6 steering steps, (Tue,\,09:00)
-  $\to$ (Fri,\,15:00); top row torus (product-coordinate) steering, bottom
-  row linear steering.}
-  \label{fig:torus}
-\end{figure}
 
 Steering in \emph{product coordinates} respects this factorization: starting
 from the source activation $h_{\mathrm{base}}$ (Tue, 09:00), each step moves
