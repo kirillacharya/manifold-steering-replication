@@ -119,5 +119,3 @@ report/         # LaTeX source + built report.pdf (2-page walkthrough)
   year={2026}
 }
 ```
-
-MIT licensed. Questions → kacharya@stanford.edu
