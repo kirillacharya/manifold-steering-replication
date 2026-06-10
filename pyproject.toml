@@ -1,0 +1,21 @@
+[project]
+name = "manifold-steering-replication"
+version = "0.1.0"
+description = "Replication of the main figure from 'Manifold Steering Reveals the Shared Geometry of Neural Network Representation and Behavior'"
+requires-python = ">=3.10"
+dependencies = [
+    "torch>=2.0",
+    "numpy",
+    "matplotlib",
+    "tqdm",
+    "scikit-learn",
+    "scipy",
+    "transformers>=4.45",
+    "accelerate",
+    "safetensors",
+    "huggingface_hub",
+    "plotly",
+]
+
+[project.optional-dependencies]
+dev = ["pytest", "ruff"]
