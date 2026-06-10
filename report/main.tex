@@ -108,8 +108,8 @@ $\mathcal{M}_h$: a single scalar coordinate (``where between Monday and
 Sunday'') decodes to a full hidden state via
 $\mathrm{PCA}^{-1}(\gamma(t))$. The behavior manifold $\mathcal{M}_y$ is
 built identically from the probability centroids, except each $\hat p_{c_k}$
-is first mapped to $\sqrt{\hat p_{c_k}}$ (Hellinger space, explained above), where Euclidean
-tools (PCA, splines, distances) respect the geometry of the probability
+is first mapped to $\sqrt{\hat p_{c_k}}$, where Euclidean
+tools as PCA, splines, distances respect the geometry of the probability
 simplex.
 
 \textbf{Steering.} To steer from a source concept to a target (say Tuesday
@@ -122,22 +122,14 @@ scalar spline coordinate and decodes:
 $\pi_{\mathrm{mfd}}(\alpha)=\mathrm{PCA}^{-1}\!\big(\gamma(i_s+\alpha\,(i_e{-}i_s))\big)$.
 At $\alpha=\tfrac13$ it passes through a point near the Wednesday centroid,
 and at $\alpha=\tfrac23$ near Thursday. Both paths are sampled at 30 evenly
-spaced points $\alpha_t$. The intervention works like activation patching.
-We give the model one fixed question (a neutral one, whose correct answer
-sits midway between source and target, so neither endpoint is favored) and
-let it process the text normally up to layer 24. At that layer we simply
-overwrite the hidden state of the final token with our path point
-$\pi(\alpha_t)$, as if the model itself had computed it. The remaining two
-decoder blocks and the unembedding then continue from this edited state, and
-the next-token distribution they produce tells us what the model now
-``believes'': we read off the probability of each concept token (Monday
-through Sunday) and group everything else into ``other''
-(\texttt{scripts/run\_steering\_probs.py}). Repeating this for all 30 path
-points traces how behavior changes as the activation slides along each path.
-If behavior follows geometry, the manifold path should hand probability mass
+spaced $\alpha_t$. The intervention itself: the model reads a fixed,
+neutral base prompt (one whose correct answer is the midpoint concept), a
+forward hook on decoder block 24 overwrites the last-token hidden state with
+the path point $\pi(\alpha_t)$, the remaining two blocks and the unembedding
+run as usual, and we record the resulting probability of every concept token
+plus an aggregated ``other'' (\texttt{scripts/run\_steering\_probs.py}). If
+behavior follows geometry, the manifold path should hand probability mass
 smoothly from concept to concept while the linear path should not.
-Everything is deterministic; all figures regenerate from committed
-checkpoints without a GPU (see the repo README).
 
 \section{Replication of the main figure}
 
@@ -208,10 +200,9 @@ walks diagonally across the grid, with both coordinates moving smoothly,
 while linear steering moves the day correctly but teleports the hour, jumping to 15:00 only at the
 final step: the same off-manifold failure mode, now visible per coordinate.
 
-\textbf{Takeaway.} Representation geometry is not decoration: moving along
+\textbf{Conclusion.} Representation geometry inside the LLM is certainly there, as moving along
 it produces natural behavior, and ignoring it breaks transitions exactly as
-the manifold picture predicts. Code, checkpoints, and full reproduction
-instructions: \url{\repourl}.
+the manifold picture predicts, which opens up multiple research directions and potential applications different domains.
 
 \section{References}
 
