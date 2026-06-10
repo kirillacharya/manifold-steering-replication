@@ -34,7 +34,7 @@
   {\small Code, checkpoints, and figures: \;\url{\repourl}}
 \end{center}
 
-\section{Background: do LLM representations and behavior share a geometry?}
+\section{Background: two different yet similar LLM spaces and how they are connected}
 
 Large language models build up internal representations layer by layer: at
 layer $L$, each token maps to a hidden state $h^{(L)}\in\mathbb{R}^d$, and
@@ -47,9 +47,9 @@ behavior}: output probability vectors, embedded via the Hellinger map
 $p\mapsto\sqrt{p}$ (which makes the Hellinger distance
 $d_H(p,q)=\tfrac{1}{\sqrt 2}\lVert\sqrt p-\sqrt q\rVert$ Euclidean
 [2]), may trace a matching \emph{behavior manifold}
-$\mathcal{M}_y$. If $\mathcal{M}_h\approx\mathcal{M}_y$ isometrically,
-steering \emph{along} $\mathcal{M}_h$ should produce natural behavioral
-transitions, while linear steering cuts off-manifold and ``teleports''
+$\mathcal{M}_y$. If $\mathcal{M}_h\approx\mathcal{M}_y$ isometrically (I omit the claims for this in the current work),
+steering \emph{along} $\mathcal{M}_h$ should produce natural ``smooth'' behavioral
+transitions, whereas linear steering cuts off-manifold and ``teleports''
 probability mass. The two strategies interpolate between a source concept
 $\hat h_{c_s}$ and a target $\hat h_{c_e}$:
 \[
@@ -83,7 +83,7 @@ model, then extend it to a 2D concept structure (a day$\times$hour torus).
 
 \section{The experiment, step by step}
 
-\textbf{Setup.} All experiments use instruction-tuned \textbf{Gemma-2-2B}
+\textbf{Setup.} For all experiments we use instruction-tuned \textbf{Gemma-2-2B}
 ($d=2304$), patching layer 24 of 26. Two cyclic concept domains:
 \emph{weekdays} (7 classes) and \emph{months} (12 classes), probed with
 arithmetic prompts such as ``\texttt{Q: What day is two days after Monday?
@@ -108,7 +108,7 @@ $\mathcal{M}_h$: a single scalar coordinate (``where between Monday and
 Sunday'') decodes to a full hidden state via
 $\mathrm{PCA}^{-1}(\gamma(t))$. The behavior manifold $\mathcal{M}_y$ is
 built identically from the probability centroids, except each $\hat p_{c_k}$
-is first mapped to $\sqrt{\hat p_{c_k}}$ (Hellinger space), where Euclidean
+is first mapped to $\sqrt{\hat p_{c_k}}$ (Hellinger space, explained above), where Euclidean
 tools (PCA, splines, distances) respect the geometry of the probability
 simplex.
 
@@ -122,13 +122,19 @@ scalar spline coordinate and decodes:
 $\pi_{\mathrm{mfd}}(\alpha)=\mathrm{PCA}^{-1}\!\big(\gamma(i_s+\alpha\,(i_e{-}i_s))\big)$.
 At $\alpha=\tfrac13$ it passes through a point near the Wednesday centroid,
 and at $\alpha=\tfrac23$ near Thursday. Both paths are sampled at 30 evenly
-spaced $\alpha_t$. The intervention itself: the model reads a fixed,
-neutral base prompt (one whose correct answer is the midpoint concept), a
-forward hook on decoder block 24 overwrites the last-token hidden state with
-the path point $\pi(\alpha_t)$, the remaining two blocks and the unembedding
-run as usual, and we record the resulting probability of every concept token
-plus an aggregated ``other'' (\texttt{scripts/run\_steering\_probs.py}). If
-behavior follows geometry, the manifold path should hand probability mass
+spaced points $\alpha_t$. The intervention works like activation patching.
+We give the model one fixed question (a neutral one, whose correct answer
+sits midway between source and target, so neither endpoint is favored) and
+let it process the text normally up to layer 24. At that layer we simply
+overwrite the hidden state of the final token with our path point
+$\pi(\alpha_t)$, as if the model itself had computed it. The remaining two
+decoder blocks and the unembedding then continue from this edited state, and
+the next-token distribution they produce tells us what the model now
+``believes'': we read off the probability of each concept token (Monday
+through Sunday) and group everything else into ``other''
+(\texttt{scripts/run\_steering\_probs.py}). Repeating this for all 30 path
+points traces how behavior changes as the activation slides along each path.
+If behavior follows geometry, the manifold path should hand probability mass
 smoothly from concept to concept while the linear path should not.
 Everything is deterministic; all figures regenerate from committed
 checkpoints without a GPU (see the repo README).
