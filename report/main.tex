@@ -2,7 +2,7 @@
 % Build: latexmk -pdf main.tex   (or: make)
 \documentclass[10pt]{article}
 
-\usepackage[margin=0.7in,bottom=0.75in]{geometry}
+\usepackage[margin=0.7in,top=0.62in,bottom=0.62in]{geometry}
 \usepackage[T1]{fontenc}
 \usepackage{helvet}            % sans headings, serif body
 \usepackage{amsmath,amssymb}
@@ -16,7 +16,7 @@
 \captionsetup{font=footnotesize,labelfont={sf,bf},skip=3pt}
 \titleformat{\section}{\large\sffamily\bfseries}{}{0pt}{}
 \titlespacing*{\section}{0pt}{8pt}{2pt}
-\setlength{\parskip}{4pt}
+\setlength{\parskip}{3pt}
 \setlength{\textfloatsep}{8pt}
 \setlength{\intextsep}{8pt}
 \renewcommand{\topfraction}{0.92}
@@ -43,11 +43,11 @@ structured concept domains may organize into geometric patterns. Hidden
 states for \emph{days of the week} or \emph{months of the year} may trace a
 smooth, low-dimensional manifold $\mathcal{M}_h\subset\mathbb{R}^d$ ---
 closed loops for cyclic domains, open curves for sequential ones. Wurgaft et
-al.~\cite{wurgaft2026manifold} ask whether this geometry \emph{predicts
+al. [1] ask whether this geometry \emph{predicts
 behavior}: output probability vectors, embedded via the Hellinger map
 $p\mapsto\sqrt{p}$ (which makes the Hellinger distance
 $d_H(p,q)=\tfrac{1}{\sqrt 2}\lVert\sqrt p-\sqrt q\rVert$ Euclidean
-\cite{amari2000methods}), may trace a matching \emph{behavior manifold}
+[2]), may trace a matching \emph{behavior manifold}
 $\mathcal{M}_y$. If $\mathcal{M}_h\approx\mathcal{M}_y$ isometrically,
 steering \emph{along} $\mathcal{M}_h$ should produce natural behavioral
 transitions, while linear steering cuts off-manifold and ``teleports''
@@ -59,10 +59,28 @@ $\hat h_{c_s}$ and a target $\hat h_{c_e}$:
   \pi_{\mathrm{mfd}}(\alpha) = s\!\big((1-\alpha)\,u_{c_s} + \alpha\,u_{c_e}\big),
   \quad u_{c_i} = s^{-1}(\hat h_{c_i}),
 \]
-where $s:\mathbb{R}^k\to\mathbb{R}^d$ maps intrinsic manifold coordinates
-back to activation space. This report replicates the paper's central figure
-on a small open model, then extends the idea to a genuinely two-dimensional
-concept structure (a day$\times$hour torus).
+where $s:\mathbb{R}^k\to\mathbb{R}^d$ maps intrinsic coordinates back to
+activation space. We replicate the paper's central figure on a small open
+model, then extend it to a 2D concept structure (a day$\times$hour torus).
+
+\begin{figure}[b!]
+  \centering
+  \begin{tabular}{@{}cc@{}}
+    \multicolumn{2}{c}{\footnotesize\sffamily\bfseries Weekdays \hspace{0.255\textwidth} Months}\\[-1pt]
+    \includegraphics[width=0.255\textwidth,trim=0 40pt 0 55pt,clip]{figures/weekdays_behavior.png} &
+    \includegraphics[width=0.255\textwidth,trim=0 40pt 0 55pt,clip]{figures/months_behavior.png}\\
+    \includegraphics[width=0.255\textwidth,trim=0 0 0 55pt,clip]{figures/weekdays_activation.png} &
+    \includegraphics[width=0.255\textwidth,trim=0 0 0 55pt,clip]{figures/months_activation.png}\\
+    \includegraphics[width=0.34\textwidth]{figures/weekdays_probs.png} &
+    \includegraphics[width=0.34\textwidth]{figures/months_probs.png}\\
+  \end{tabular}
+  \caption{Gemma-2-2B layer 24, steering Tue$\to$Fri (weekdays) and
+  Jan$\to$Jul (months). Rows 1--2: fitted behavior manifolds $\mathcal{M}_y$
+  (Hellinger--PCA) and activation manifolds $\mathcal{M}_h$ (activation--PCA)
+  with the linear path (dashed) and manifold path (black). Row 3:
+  concept-token probabilities along each path.}
+  \label{fig:main}
+\end{figure}
 
 \section{The experiment, step by step}
 
@@ -88,28 +106,8 @@ $\pi_{\mathrm{mfd}}(\alpha)=\mathrm{PCA}^{-1}\!\big(\gamma(i_s+\alpha\,\Delta
 i)\big)$. At each of 30 steps, a forward hook replaces the layer-24 hidden
 state at the last token with $\pi(\alpha_t)$ and the output probability of
 every concept token is recorded (\texttt{scripts/run\_steering\_probs.py}).
-The pipeline is deterministic (no sampling, no training); every figure below
-regenerates from committed checkpoints without a GPU, and collection scripts
-expose \texttt{--seed} for exact reproducibility.
-
-\begin{figure}[t]
-  \centering
-  \begin{tabular}{@{}cc@{}}
-    \multicolumn{2}{c}{\footnotesize\sffamily\bfseries Weekdays \hspace{0.255\textwidth} Months}\\[-1pt]
-    \includegraphics[width=0.255\textwidth,trim=0 40pt 0 55pt,clip]{figures/weekdays_behavior.png} &
-    \includegraphics[width=0.255\textwidth,trim=0 40pt 0 55pt,clip]{figures/months_behavior.png}\\
-    \includegraphics[width=0.255\textwidth,trim=0 0 0 55pt,clip]{figures/weekdays_activation.png} &
-    \includegraphics[width=0.255\textwidth,trim=0 0 0 55pt,clip]{figures/months_activation.png}\\
-    \includegraphics[width=0.34\textwidth]{figures/weekdays_probs.png} &
-    \includegraphics[width=0.34\textwidth]{figures/months_probs.png}\\
-  \end{tabular}
-  \caption{Gemma-2-2B layer 24, steering Tue$\to$Fri (weekdays) and
-  Jan$\to$Jul (months). Rows 1--2: fitted behavior manifolds $\mathcal{M}_y$
-  (Hellinger--PCA) and activation manifolds $\mathcal{M}_h$ (activation--PCA)
-  with the linear path (dashed) and manifold path (black). Row 3:
-  concept-token probabilities along each path.}
-  \label{fig:main}
-\end{figure}
+Everything is deterministic; all figures regenerate from committed
+checkpoints without a GPU (see the repo README).
 
 \section{Replication of the main figure}
 
@@ -128,23 +126,31 @@ flatline; at layer 24 (92\% depth) the replication is clean.
 
 \section{Extension: torus steering (day $\times$ hour)}
 
-Do LLMs encode \emph{two-dimensional} concept structure? We collect layer-24
-activations for all 168 prompts ``\texttt{It is HH:00 on \{Day\}}'' (7 days
-$\times$ 24 hours) and recover two 2D subspaces
-$V_{\mathrm{day}},V_{\mathrm{hour}}\in\mathbb{R}^{2\times d}$ by ordinary
-least squares onto $[\sin\theta,\cos\theta]$ labels, QR-orthogonalized
-(\texttt{scripts/run\_hierarchical\_steering.py}). Projecting every
-activation onto both subspaces and embedding on a 3D torus surface
-(Fig.~\ref{fig:torus}, left) reveals 7 ordered day-arcs; the hour coordinate
-is only partially circular at this layer.
+Do LLMs encode \emph{two-dimensional} concept structure? A weekday lives on
+one circle; a (day, hour) pair lives on a \emph{product} of two circles ---
+a torus. We collect layer-24 activations for all 168 prompts ``\texttt{It is
+HH:00 on \{Day\}}'' (7 days $\times$ 24 hours) and assign each prompt two
+angles, $\theta_{\mathrm{day}}=2\pi k/7$ and $\theta_{\mathrm{hour}}=2\pi
+h/24$. Each circle's 2D subspace
+$V_{\mathrm{day}},V_{\mathrm{hour}}\in\mathbb{R}^{2\times d}$ is recovered by
+regressing centered activations onto the standardized labels
+$[\sin\theta,\cos\theta]$ --- each label component yields one direction
+$d\propto\sum_i (h_i-\bar h)\,\ell_i$ --- followed by QR-orthogonalization of
+the two directions (\texttt{scripts/run\_hierarchical\_steering.py}). The two
+recovered planes are nearly orthogonal to each other (max
+$|\cos|\approx0.18$), so day and hour occupy largely independent planes of
+the residual stream. Projecting each activation onto both planes gives two recovered angles,
+rendered on a torus --- day on the major circle, hour on the minor
+(Fig.~\ref{fig:torus}, left). The 7 day-arcs are cleanly ordered; the hour
+circle does not fully close, so hour is only partially circular here.
 
 \begin{figure}[b!]
   \centering
-  \begin{minipage}[c]{0.46\textwidth}
+  \begin{minipage}[c]{0.44\textwidth}
     \centering
     \includegraphics[width=\linewidth,trim=0 0 0 48pt,clip]{figures/torus_repr.png}
   \end{minipage}\hfill
-  \begin{minipage}[c]{0.52\textwidth}
+  \begin{minipage}[c]{0.50\textwidth}
     \centering
     \includegraphics[width=\linewidth,trim=0 0 0 44pt,clip]{figures/subspace_2d_grid.png}
   \end{minipage}
@@ -156,35 +162,31 @@ is only partially circular at this layer.
   \label{fig:torus}
 \end{figure}
 
-Steering in \emph{product coordinates} moves each factor independently:
-$h(\alpha) = h_{\mathrm{base}} + \Delta_{\mathrm{day}}(\alpha)\,V_{\mathrm{day}}
-+ \Delta_{\mathrm{hour}}(\alpha)\,V_{\mathrm{hour}}$. Steering from
-(Tue,\,09:00) to (Fri,\,15:00) over six steps (Fig.~\ref{fig:torus}, right),
-torus steering shifts probability mass smoothly in \emph{both} dimensions,
-while linear steering moves the day correctly but teleports the hour, jumping
-to 15:00 only at the final step --- the same off-manifold failure mode as in
-the 1D domains, now visible per coordinate.
+Steering in \emph{product coordinates} respects this factorization: starting
+from the source activation $h_{\mathrm{base}}$ (Tue, 09:00), each step moves
+the day and hour coordinates \emph{independently within their own planes},
+$h(\alpha) = h_{\mathrm{base}} +
+\Delta_{\mathrm{day}}(\alpha)\,V_{\mathrm{day}} +
+\Delta_{\mathrm{hour}}(\alpha)\,V_{\mathrm{hour}}$, where
+$\Delta_c(\alpha)$ interpolates the source$\to$target offset within each
+plane --- the 2D analogue of walking along the manifold. Each patched activation is decoded into a day$\times$hour probability grid:
+day from token probabilities, hour by nearest centroid in the
+$V_{\mathrm{hour}}$ plane (two-digit hours are multi-token for Gemma, so
+subspace readout is more faithful). Steering (Tue,\,09:00) $\to$
+(Fri,\,15:00) over six steps (Fig.~\ref{fig:torus}, right), the bright cell
+walks diagonally --- both coordinates move smoothly --- while linear steering
+moves the day correctly but teleports the hour, jumping to 15:00 only at the
+final step: the same off-manifold failure mode, now visible per coordinate.
 
-\textbf{Takeaway.} Both the replication and the torus extension support the
-paper's claim: the geometry of a model's representations is not decoration
---- moving along it is what produces natural behavior, and ignoring it
-(linear steering) breaks transitions in exactly the way the manifold picture
-predicts. All code, checkpoints, SLURM scripts, and a no-GPU figure
-regeneration path are at \url{\repourl}.
+\textbf{Takeaway.} Representation geometry is not decoration: moving along
+it produces natural behavior, and ignoring it breaks transitions exactly as
+the manifold picture predicts. Code, checkpoints, SLURM scripts, and a no-GPU
+figure regeneration path: \url{\repourl}.
 
-\begin{thebibliography}{9}\footnotesize
-\bibitem{wurgaft2026manifold}
-D.~Wurgaft, C.~Rager, M.~Kowal, V.~Shyam, S.~Feucht, U.~Bhalla, T.~Haklay,
-E.~Bigelow, R.~Sarfati, T.~McGrath, O.~Lewis, J.~Merullo, N.~D.~Goodman,
-T.~Fel, A.~Geiger, and E.~S.~Lubana.
-\newblock Manifold steering reveals the shared geometry of neural network
-representation and behavior.
-\newblock \emph{arXiv preprint arXiv:2605.05115}, 2026.
-
-\bibitem{amari2000methods}
-S.~Amari and H.~Nagaoka.
-\newblock \emph{Methods of Information Geometry}.
-\newblock American Mathematical Society, 2000.
-\end{thebibliography}
+\vspace{3pt}
+{\footnotesize\textsf{\textbf{References}}\; [1] D.~Wurgaft, C.~Rager,
+M.~Kowal, et~al. Manifold steering reveals the shared geometry of neural
+network representation and behavior. \emph{arXiv:2605.05115}, 2026.\; [2]
+S.~Amari and H.~Nagaoka. \emph{Methods of Information Geometry}. AMS, 2000.}
 
 \end{document}

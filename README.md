@@ -70,6 +70,19 @@ on any laptop with no model download. The committed checkpoints are the
 originals behind the report; re-running the full pipeline reproduces them
 (see Reproducibility below).
 
+## Interactive (Plotly) demos
+
+`run_weekdays.py` also emits two self-contained interactive HTML pages
+(committed in `figures/`):
+
+- **[Steering slider](https://htmlpreview.github.io/?https://github.com/kirillacharya/manifold-steering-replication/blob/main/figures/weekdays_L24_Tuesday_Friday_slider.html)** —
+  drag a slider to walk Tue→Fri along both paths and watch the 3D markers and
+  probability cursor move (Goodfire-blog style).
+- **[3D manifolds](https://htmlpreview.github.io/?https://github.com/kirillacharya/manifold-steering-replication/blob/main/figures/weekdays_L24_Tuesday_Friday_3d.html)** —
+  rotatable activation-space and behavior-space scenes with both steering paths.
+
+(Or open the files locally in any browser.)
+
 ## How it works
 
 | Step | Script | What it does |
