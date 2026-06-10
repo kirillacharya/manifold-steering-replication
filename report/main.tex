@@ -4,7 +4,6 @@
 
 \usepackage[margin=0.7in,top=0.62in,bottom=0.62in]{geometry}
 \usepackage[T1]{fontenc}
-\usepackage{helvet}            % sans headings, serif body
 \usepackage{amsmath,amssymb}
 \usepackage{graphicx}
 \usepackage{parskip}
@@ -13,8 +12,8 @@
 \usepackage[colorlinks=true,linkcolor=black,citecolor=gray,urlcolor=RoyalBlue]{hyperref}
 \usepackage{caption}
 
-\captionsetup{font=footnotesize,labelfont={sf,bf},skip=3pt}
-\titleformat{\section}{\large\sffamily\bfseries}{}{0pt}{}
+\captionsetup{font=footnotesize,labelfont=bf,skip=3pt}
+\titleformat{\section}{\large\bfseries}{}{0pt}{}
 \titlespacing*{\section}{0pt}{8pt}{2pt}
 \setlength{\parskip}{3pt}
 \setlength{\textfloatsep}{8pt}
@@ -29,13 +28,13 @@
 \begin{document}
 
 \begin{center}
-  {\LARGE\sffamily\bfseries Replicating Manifold Steering:\\[2pt]
+  {\LARGE\bfseries Replicating Manifold Steering:\\[2pt]
    Geometry of LLM Representations and Behavior}\\[5pt]
   {\normalsize Kirill Acharya \,·\, Stanford University \,·\, CS 221M Final Project}\\[2pt]
   {\small Code, checkpoints, and figures: \;\url{\repourl}}
 \end{center}
 
-\section{Why geometry?}
+\section{Background: do LLM representations and behavior share a geometry?}
 
 Large language models build up internal representations layer by layer: at
 layer $L$, each token maps to a hidden state $h^{(L)}\in\mathbb{R}^d$, and
@@ -66,7 +65,7 @@ model, then extend it to a 2D concept structure (a day$\times$hour torus).
 \begin{figure}[b!]
   \centering
   \begin{tabular}{@{}cc@{}}
-    \multicolumn{2}{c}{\footnotesize\sffamily\bfseries Weekdays \hspace{0.255\textwidth} Months}\\[-1pt]
+    \multicolumn{2}{c}{\footnotesize\bfseries Weekdays \hspace{0.255\textwidth} Months}\\[-1pt]
     \includegraphics[width=0.255\textwidth,trim=0 40pt 0 55pt,clip]{figures/weekdays_behavior.png} &
     \includegraphics[width=0.255\textwidth,trim=0 40pt 0 55pt,clip]{figures/months_behavior.png}\\
     \includegraphics[width=0.255\textwidth,trim=0 0 0 55pt,clip]{figures/weekdays_activation.png} &
@@ -95,11 +94,23 @@ over concept tokens, then average per concept:
 $\hat h_c = \tfrac{1}{N_c}\sum_{i\in S_c} h^{(L)}_i$ and
 $\hat p_c = \tfrac{1}{N_c}\sum_{i\in S_c} p_i$.
 
-\textbf{Manifolds.} Activation centroids $\{\hat h_{c_k}\}$ are reduced by
-PCA to $r$ dimensions ($r{=}6$ weekdays, $r{=}11$ months) and a cubic spline
-$\gamma$ with $C^2$ continuity is fitted through them in concept order,
-giving $\mathcal{M}_h$; the same procedure on Hellinger-embedded behavior
-centroids $\{\sqrt{\hat p_{c_k}}\}$ gives $\mathcal{M}_y$.
+\textbf{Manifolds.} A ``manifold'' here is simply a smooth curve through the
+concept centroids. The 7 weekday centroids $\hat h_{c_k}\in\mathbb{R}^{2304}$
+span at most a 6-dimensional subspace, so PCA to $r{=}6$ ($r{=}11$ for 12
+months) is lossless --- it just re-expresses each centroid in coordinates
+$z_k\in\mathbb{R}^r$ adapted to the data. We then fit a cubic spline
+$\gamma:\mathbb{R}\to\mathbb{R}^r$ through the points \emph{in concept
+order}, with the concept index as curve parameter: $\gamma(k)=z_k$ exactly at
+each knot, and between knots
+$\gamma(t)=a_k+b_k(t{-}k)+c_k(t{-}k)^2+d_k(t{-}k)^3$, coefficients solved
+jointly so the curve is $C^2$-smooth. This gives the activation manifold
+$\mathcal{M}_h$: a single scalar coordinate (``where between Monday and
+Sunday'') decodes to a full hidden state via
+$\mathrm{PCA}^{-1}(\gamma(t))$. The behavior manifold $\mathcal{M}_y$ is
+built identically from the probability centroids, except each $\hat p_{c_k}$
+is first mapped to $\sqrt{\hat p_{c_k}}$ (Hellinger space), where Euclidean
+tools --- PCA, splines, distances --- respect the geometry of the probability
+simplex.
 
 \textbf{Steering.} For $\alpha\in[0,1]$ between spline indices $i_s,i_e$:
 $\pi_{\mathrm{mfd}}(\alpha)=\mathrm{PCA}^{-1}\!\big(\gamma(i_s+\alpha\,\Delta
@@ -119,10 +130,9 @@ trajectories (row 3), produces \emph{smooth, ordered} transitions: steering
 from Tuesday to Friday passes probability mass through Wednesday and Thursday
 in sequence. Linear steering instead leaves the manifold and
 \emph{teleports}: intermediate concepts never rise in order, and off-concept
-mass appears mid-path. One practical lesson: the patch must be applied deep
-enough. At layer 12, keys and values computed from the original prompt
-override the patched query over the 14 remaining blocks and both methods
-flatline; at layer 24 (92\% depth) the replication is clean.
+mass appears mid-path. One practical lesson: patch deep enough --- at layer
+12, keys/values from the original prompt override the patch over the 14
+remaining blocks and both methods flatline; layer 24 (92\% depth) is clean.
 
 \section{Extension: torus steering (day $\times$ hour)}
 
@@ -183,10 +193,16 @@ it produces natural behavior, and ignoring it breaks transitions exactly as
 the manifold picture predicts. Code, checkpoints, SLURM scripts, and a no-GPU
 figure regeneration path: \url{\repourl}.
 
-\vspace{3pt}
-{\footnotesize\textsf{\textbf{References}}\; [1] D.~Wurgaft, C.~Rager,
-M.~Kowal, et~al. Manifold steering reveals the shared geometry of neural
-network representation and behavior. \emph{arXiv:2605.05115}, 2026.\; [2]
-S.~Amari and H.~Nagaoka. \emph{Methods of Information Geometry}. AMS, 2000.}
+\section{References}
+
+{\small
+[1] D.~Wurgaft, C.~Rager, M.~Kowal, V.~Shyam, S.~Feucht, U.~Bhalla,
+T.~Haklay, E.~Bigelow, R.~Sarfati, T.~McGrath, O.~Lewis, J.~Merullo,
+N.~D.~Goodman, T.~Fel, A.~Geiger, and E.~S.~Lubana. Manifold steering
+reveals the shared geometry of neural network representation and behavior.
+\emph{arXiv preprint arXiv:2605.05115}, 2026.
+
+[2] S.~Amari and H.~Nagaoka. \emph{Methods of Information Geometry}.
+American Mathematical Society, 2000.}
 
 \end{document}
