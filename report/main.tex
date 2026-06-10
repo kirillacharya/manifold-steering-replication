@@ -122,14 +122,22 @@ scalar spline coordinate and decodes:
 $\pi_{\mathrm{mfd}}(\alpha)=\mathrm{PCA}^{-1}\!\big(\gamma(i_s+\alpha\,(i_e{-}i_s))\big)$.
 At $\alpha=\tfrac13$ it passes through a point near the Wednesday centroid,
 and at $\alpha=\tfrac23$ near Thursday. Both paths are sampled at 30 evenly
-spaced $\alpha_t$. The intervention itself: the model reads a fixed,
-neutral base prompt (one whose correct answer is the midpoint concept), a
-forward hook on decoder block 24 overwrites the last-token hidden state with
-the path point $\pi(\alpha_t)$, the remaining two blocks and the unembedding
-run as usual, and we record the resulting probability of every concept token
-plus an aggregated ``other'' (\texttt{scripts/run\_steering\_probs.py}). If
-behavior follows geometry, the manifold path should hand probability mass
-smoothly from concept to concept while the linear path should not.
+spaced $\alpha_t$. The intervention itself is simple. For
+Tuesday$\,\to\,$Friday the model always reads the same question:
+``\texttt{Q: What day is two days after Monday? A:}''. Its correct answer,
+Wednesday, lies between the two endpoints, so the prompt favors neither
+(months use ``\texttt{three months after January}'', answer April). The model
+processes this prompt normally up to layer 24. There we overwrite the hidden
+state of the final token, the position right after ``\texttt{A:}'' where the
+model is about to answer, with the path point $\pi(\alpha_t)$, as if the
+model had computed it itself. The last two decoder blocks run unchanged, and
+the output distribution tells us what the model now wants to answer: we
+record the probability of each day token (Monday through Sunday) and group
+everything else as ``other'' (\texttt{scripts/run\_steering\_probs.py}).
+Sweeping $\alpha_t$ from 0 to 1 traces how the answer changes as the
+activation slides along each path. If behavior follows geometry, the manifold
+path should hand probability mass smoothly from one day to the next, while
+the linear path should not.
 
 \section{Replication of the main figure}
 
