@@ -31,7 +31,7 @@
   {\LARGE\bfseries Replicating Manifold Steering:\\[2pt]
    Geometry of LLM Representations and Behavior}\\[5pt]
   {\normalsize Kirill Acharya \,·\, Stanford University \,·\, CS 221M Final Project}\\[2pt]
-  {\small Code, checkpoints, and figures: \;\url{\repourl}}
+  {\small Project repository: \;\url{\repourl}}
 \end{center}
 
 \section{Background: two different yet similar LLM spaces and how they are connected}
@@ -161,15 +161,19 @@ one circle; a (day, hour) pair lives on a \emph{product} of two circles,
 which is a torus. We collect layer-24 activations for all 168 prompts ``\texttt{It is
 HH:00 on \{Day\}}'' (7 days $\times$ 24 hours) and assign each prompt two
 angles, $\theta_{\mathrm{day}}=2\pi k/7$ and $\theta_{\mathrm{hour}}=2\pi
-h/24$. Each circle's 2D subspace
-$V_{\mathrm{day}},V_{\mathrm{hour}}\in\mathbb{R}^{2\times d}$ is recovered by
-regressing centered activations onto the standardized labels
-$[\sin\theta,\cos\theta]$ (each label component yields one direction
-$d\propto\sum_i (h_i-\bar h)\,\ell_i$), followed by QR-orthogonalization of
-the two directions (\texttt{scripts/run\_hierarchical\_steering.py}). The two
-recovered planes are nearly orthogonal to each other (max
-$|\cos|\approx0.18$), so day and hour occupy largely independent planes of
-the residual stream. Projecting each activation onto both planes gives two recovered angles,
+h/24$. If day is encoded cyclically, then somewhere in the 2304 hidden dimensions
+there should be a 2D plane in which the seven days sit on a circle: one
+direction along which activations vary like $\sin\theta_{\mathrm{day}}$ and
+one varying like $\cos\theta_{\mathrm{day}}$. We find each direction by
+correlation: average the (centered) activation vectors, weighting each prompt
+by the $\sin\theta$ (or $\cos\theta$) of its label. Making the two
+directions exactly perpendicular turns them into a clean coordinate plane
+$V_{\mathrm{day}}\in\mathbb{R}^{2\times d}$, and repeating the procedure
+with $\theta_{\mathrm{hour}}$ gives $V_{\mathrm{hour}}$
+(\texttt{scripts/run\_hierarchical\_steering.py}). The day and hour planes
+also come out nearly perpendicular to \emph{each other} (max
+$|\cos|\approx0.18$): the model stores the two attributes in largely
+independent coordinates. Projecting each activation onto both planes gives two recovered angles,
 rendered on a torus surface with day on the major circle and hour on the
 minor (Fig.~\ref{fig:torus}, left). The 7 day-arcs are cleanly ordered; the hour
 circle does not fully close, so hour is only partially circular here.
