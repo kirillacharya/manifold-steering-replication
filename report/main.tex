@@ -112,11 +112,24 @@ is first mapped to $\sqrt{\hat p_{c_k}}$ (Hellinger space), where Euclidean
 tools --- PCA, splines, distances --- respect the geometry of the probability
 simplex.
 
-\textbf{Steering.} For $\alpha\in[0,1]$ between spline indices $i_s,i_e$:
-$\pi_{\mathrm{mfd}}(\alpha)=\mathrm{PCA}^{-1}\!\big(\gamma(i_s+\alpha\,\Delta
-i)\big)$. At each of 30 steps, a forward hook replaces the layer-24 hidden
-state at the last token with $\pi(\alpha_t)$ and the output probability of
-every concept token is recorded (\texttt{scripts/run\_steering\_probs.py}).
+\textbf{Steering.} To steer from a source concept to a target (say Tuesday
+$\to$ Friday, spline indices $i_s{=}1$, $i_e{=}4$), we build the two paths of
+the Background section concretely. The \emph{linear} path ignores the
+manifold: $\pi_{\mathrm{lin}}(\alpha)=(1-\alpha)\hat h_{c_s}+\alpha\hat
+h_{c_e}$, a straight segment between the two raw centroids in
+$\mathbb{R}^{2304}$. The \emph{manifold} path instead interpolates the
+scalar spline coordinate and decodes:
+$\pi_{\mathrm{mfd}}(\alpha)=\mathrm{PCA}^{-1}\!\big(\gamma(i_s+\alpha\,(i_e{-}i_s))\big)$
+--- at $\alpha=\tfrac13$ it passes through (a point near) the Wednesday
+centroid, at $\alpha=\tfrac23$ Thursday. Both paths are sampled at 30 evenly
+spaced $\alpha_t$. The intervention itself: the model reads a fixed,
+neutral base prompt (one whose correct answer is the midpoint concept), a
+forward hook on decoder block 24 overwrites the last-token hidden state with
+the path point $\pi(\alpha_t)$, the remaining two blocks and the unembedding
+run as usual, and we record the resulting probability of every concept token
+plus an aggregated ``other'' (\texttt{scripts/run\_steering\_probs.py}). If
+behavior follows geometry, the manifold path should hand probability mass
+smoothly from concept to concept while the linear path should not.
 Everything is deterministic; all figures regenerate from committed
 checkpoints without a GPU (see the repo README).
 
