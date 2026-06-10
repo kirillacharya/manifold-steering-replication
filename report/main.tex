@@ -40,7 +40,7 @@ Large language models build up internal representations layer by layer: at
 layer $L$, each token maps to a hidden state $h^{(L)}\in\mathbb{R}^d$, and
 structured concept domains may organize into geometric patterns. Hidden
 states for \emph{days of the week} or \emph{months of the year} may trace a
-smooth, low-dimensional manifold $\mathcal{M}_h\subset\mathbb{R}^d$ ---
+smooth, low-dimensional manifold $\mathcal{M}_h\subset\mathbb{R}^d$:
 closed loops for cyclic domains, open curves for sequential ones. Wurgaft et
 al. [1] ask whether this geometry \emph{predicts
 behavior}: output probability vectors, embedded via the Hellinger map
@@ -86,8 +86,8 @@ model, then extend it to a 2D concept structure (a day$\times$hour torus).
 \textbf{Setup.} All experiments use instruction-tuned \textbf{Gemma-2-2B}
 ($d=2304$), patching layer 24 of 26. Two cyclic concept domains:
 \emph{weekdays} (7 classes) and \emph{months} (12 classes), probed with
-arithmetic prompts --- ``\texttt{Q: What day is two days after Monday? A:}''
-(answer: \emph{Wednesday}), 6 prompts per concept
+arithmetic prompts such as ``\texttt{Q: What day is two days after Monday?
+A:}'' (answer: \emph{Wednesday}), with 6 prompts per concept
 (\texttt{scripts/run\_weekdays.py}, \texttt{run\_months.py}). For each prompt
 we record the last-token hidden state $h^{(24)}$ and the output distribution
 over concept tokens, then average per concept:
@@ -97,7 +97,7 @@ $\hat p_c = \tfrac{1}{N_c}\sum_{i\in S_c} p_i$.
 \textbf{Manifolds.} A ``manifold'' here is simply a smooth curve through the
 concept centroids. The 7 weekday centroids $\hat h_{c_k}\in\mathbb{R}^{2304}$
 span at most a 6-dimensional subspace, so PCA to $r{=}6$ ($r{=}11$ for 12
-months) is lossless --- it just re-expresses each centroid in coordinates
+months) is lossless; it simply re-expresses each centroid in coordinates
 $z_k\in\mathbb{R}^r$ adapted to the data. We then fit a cubic spline
 $\gamma:\mathbb{R}\to\mathbb{R}^r$ through the points \emph{in concept
 order}, with the concept index as curve parameter: $\gamma(k)=z_k$ exactly at
@@ -109,7 +109,7 @@ Sunday'') decodes to a full hidden state via
 $\mathrm{PCA}^{-1}(\gamma(t))$. The behavior manifold $\mathcal{M}_y$ is
 built identically from the probability centroids, except each $\hat p_{c_k}$
 is first mapped to $\sqrt{\hat p_{c_k}}$ (Hellinger space), where Euclidean
-tools --- PCA, splines, distances --- respect the geometry of the probability
+tools (PCA, splines, distances) respect the geometry of the probability
 simplex.
 
 \textbf{Steering.} To steer from a source concept to a target (say Tuesday
@@ -119,9 +119,9 @@ manifold: $\pi_{\mathrm{lin}}(\alpha)=(1-\alpha)\hat h_{c_s}+\alpha\hat
 h_{c_e}$, a straight segment between the two raw centroids in
 $\mathbb{R}^{2304}$. The \emph{manifold} path instead interpolates the
 scalar spline coordinate and decodes:
-$\pi_{\mathrm{mfd}}(\alpha)=\mathrm{PCA}^{-1}\!\big(\gamma(i_s+\alpha\,(i_e{-}i_s))\big)$
---- at $\alpha=\tfrac13$ it passes through (a point near) the Wednesday
-centroid, at $\alpha=\tfrac23$ Thursday. Both paths are sampled at 30 evenly
+$\pi_{\mathrm{mfd}}(\alpha)=\mathrm{PCA}^{-1}\!\big(\gamma(i_s+\alpha\,(i_e{-}i_s))\big)$.
+At $\alpha=\tfrac13$ it passes through a point near the Wednesday centroid,
+and at $\alpha=\tfrac23$ near Thursday. Both paths are sampled at 30 evenly
 spaced $\alpha_t$. The intervention itself: the model reads a fixed,
 neutral base prompt (one whose correct answer is the midpoint concept), a
 forward hook on decoder block 24 overwrites the last-token hidden state with
@@ -137,34 +137,35 @@ checkpoints without a GPU (see the repo README).
 
 Figure~\ref{fig:main} replicates the paper's main result. In both domains the
 concept centroids trace closed, ordered loops in activation space and in
-behavior space --- the cyclic structure of weeks and months is visibly
+behavior space; the cyclic structure of weeks and months is visibly
 encoded. The manifold path stays on the fitted curve and, in the probability
 trajectories (row 3), produces \emph{smooth, ordered} transitions: steering
 from Tuesday to Friday passes probability mass through Wednesday and Thursday
 in sequence. Linear steering instead leaves the manifold and
 \emph{teleports}: intermediate concepts never rise in order, and off-concept
-mass appears mid-path. One practical lesson: patch deep enough --- at layer
-12, keys/values from the original prompt override the patch over the 14
-remaining blocks and both methods flatline; layer 24 (92\% depth) is clean.
+mass appears mid-path. One practical lesson: the patch must be applied
+deep enough. At layer 12, keys and values computed from the original prompt
+override the patch over the 14 remaining blocks and both methods flatline,
+while layer 24 (92\% depth) replicates cleanly.
 
 \section{Extension: torus steering (day $\times$ hour)}
 
 Do LLMs encode \emph{two-dimensional} concept structure? A weekday lives on
-one circle; a (day, hour) pair lives on a \emph{product} of two circles ---
-a torus. We collect layer-24 activations for all 168 prompts ``\texttt{It is
+one circle; a (day, hour) pair lives on a \emph{product} of two circles,
+which is a torus. We collect layer-24 activations for all 168 prompts ``\texttt{It is
 HH:00 on \{Day\}}'' (7 days $\times$ 24 hours) and assign each prompt two
 angles, $\theta_{\mathrm{day}}=2\pi k/7$ and $\theta_{\mathrm{hour}}=2\pi
 h/24$. Each circle's 2D subspace
 $V_{\mathrm{day}},V_{\mathrm{hour}}\in\mathbb{R}^{2\times d}$ is recovered by
 regressing centered activations onto the standardized labels
-$[\sin\theta,\cos\theta]$ --- each label component yields one direction
-$d\propto\sum_i (h_i-\bar h)\,\ell_i$ --- followed by QR-orthogonalization of
+$[\sin\theta,\cos\theta]$ (each label component yields one direction
+$d\propto\sum_i (h_i-\bar h)\,\ell_i$), followed by QR-orthogonalization of
 the two directions (\texttt{scripts/run\_hierarchical\_steering.py}). The two
 recovered planes are nearly orthogonal to each other (max
 $|\cos|\approx0.18$), so day and hour occupy largely independent planes of
 the residual stream. Projecting each activation onto both planes gives two recovered angles,
-rendered on a torus --- day on the major circle, hour on the minor
-(Fig.~\ref{fig:torus}, left). The 7 day-arcs are cleanly ordered; the hour
+rendered on a torus surface with day on the major circle and hour on the
+minor (Fig.~\ref{fig:torus}, left). The 7 day-arcs are cleanly ordered; the hour
 circle does not fully close, so hour is only partially circular here.
 
 \begin{figure}[b!]
@@ -192,13 +193,13 @@ $h(\alpha) = h_{\mathrm{base}} +
 \Delta_{\mathrm{day}}(\alpha)\,V_{\mathrm{day}} +
 \Delta_{\mathrm{hour}}(\alpha)\,V_{\mathrm{hour}}$, where
 $\Delta_c(\alpha)$ interpolates the source$\to$target offset within each
-plane --- the 2D analogue of walking along the manifold. Each patched activation is decoded into a day$\times$hour probability grid:
+plane, the 2D analogue of walking along the manifold. Each patched activation is decoded into a day$\times$hour probability grid:
 day from token probabilities, hour by nearest centroid in the
 $V_{\mathrm{hour}}$ plane (two-digit hours are multi-token for Gemma, so
 subspace readout is more faithful). Steering (Tue,\,09:00) $\to$
 (Fri,\,15:00) over six steps (Fig.~\ref{fig:torus}, right), the bright cell
-walks diagonally --- both coordinates move smoothly --- while linear steering
-moves the day correctly but teleports the hour, jumping to 15:00 only at the
+walks diagonally across the grid, with both coordinates moving smoothly,
+while linear steering moves the day correctly but teleports the hour, jumping to 15:00 only at the
 final step: the same off-manifold failure mode, now visible per coordinate.
 
 \textbf{Takeaway.} Representation geometry is not decoration: moving along
