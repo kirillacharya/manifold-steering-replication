@@ -9,9 +9,12 @@
 
 # Full collection + steering pipeline on a SLURM cluster.
 # Prereqs: `uv sync` run once on the login node; HF_TOKEN set for gated Gemma.
+# Submit from the repo root: sbatch slurm/steering.sbatch
+# (or from anywhere with: REPO_DIR=/path/to/repo sbatch ...)
 set -euo pipefail
-cd "$(dirname "$0")/.."
+cd "${REPO_DIR:-${SLURM_SUBMIT_DIR:-$(dirname "$0")/..}}"
 
+export PATH="$HOME/.local/bin:$PATH"   # uv installs here by default
 export HF_HOME="${HF_HOME:-$HOME/.cache/huggingface}"
 
 uv run python scripts/run_weekdays.py --layer 24 --seed "${SEED:-0}"
